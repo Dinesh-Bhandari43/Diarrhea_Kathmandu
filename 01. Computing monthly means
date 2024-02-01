@@ -1,0 +1,118 @@
+title: "Monthly climate data analsis for Kathmandu district"
+author: "Dinesh Bhandari"
+date: "21 November 2018"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+
+library(readr)
+Kathmandu <- read_csv("Kathmandu.csv")
+data <- Kathmandu
+data <- data.frame(data)
+
+
+#### computing mean monthly maximum temperature from daily maximum temperature###
+Meanmaxtemp <- aggregate(max_temp~month+year, data, mean)
+
+#### computing mean monthly minimum temperature from daily minimum temperature###
+
+Meanmintemp <- aggregate(min_temp~ month+year, data, mean)
+
+### computing mean monthly relative humditiy (rh12) from daily relative humidity###
+
+Meanrh12 <- aggregate(rh_12~ month+year, data, mean)
+
+### computing mean monthly relative humditiy (rh3) from daily relative humidity###
+
+Meanrh3 <- aggregate(rh_3~ month+year, data, mean)
+
+```
+
+
+```{r Newdataframe, include=FALSE}
+### Compiling the information into a new dataframe.
+data<- c(Meanmaxtemp,Meanmintemp,Meanrh12,Meanrh3 )
+data<- as.data.frame(data)
+
+### Dropping the repeatition###
+data$month.1 <- NULL
+data$month.2 <- NULL
+data$month.3 <- NULL
+data$year.1 <- NULL
+data$year.2 <- NULL
+data$year.3 <- NULL
+
+### Compiling the date##
+
+data$time <- seq(nrow(data))
+data$day <- "1"
+data$Date<- as.Date(paste(data$year,data$month,data$day, sep="-"))
+
+###Computation of mean temperataure and mean relative humidity using daily maximum and daily minimum temperature and rh_12, rh_3 resp.##
+
+data$mean_temp <- (data$max_temp+data$min_temp)/2
+data$mean_rh <- (data$rh_12+data$rh_3)/2
+
+### Arranging the data##
+ data<- data[,c(9,8,7,1:4,10,5:6,11)]
+```
+
+```{r summary, echo=FALSE}
+
+### summary###
+summary(data)
+
+library(Hmisc)
+datacor <- rcorr(as.matrix(data[,6:11]))
+datacor$r
+datacor$P
+
+##Calculating Pearson's correlation coefficients for predictors except lag variables"
+cp <- cor(data[,6:11])
+
+## Visualising the correlaiton matrix ###
+library(corrplot)
+palette = colorRampPalette(c("blue", "green", "red")) (20)
+corrplot(cp, col = palette, method= "circle")
+
+##Generating heatmap for the correlation plot##
+heatmap(x = cp, col = palette, symm = TRUE)
+
+
+```
+
+```{r plot, echo=FALSE}
+
+### Plotting the graph for temperature and humidity"
+oldpar <- par(no.readonly=TRUE)
+par(mex=0.8,mfrow=c(3,2))
+
+plot(data$Date,data$max_temp,pch=".", cex=5, col= "blue", main="Trend of monthly maximum temperature  in Kathmandu district",
+     ylab="Temperature in Celsius",xlab="Date")
+abline(v=data$Date[grep("-01-01",data$Date)],col=grey(0.6),lty=2)
+
+plot(data$Date,data$min_temp,pch=".", cex=5, col= "red", main="Trend of monthly minimum temperature in Kathmandu district",
+     ylab="Temperature in celsisu",xlab="Date")
+abline(v=data$Date[grep("-01-01",data$Date)],col=grey(0.6),lty=2)
+
+plot(data$Date,data$mean_temp,pch=".", cex=5, col= "green", main="Trend ofmonthly mean temperature  in Kathmandu district",
+     ylab="Temperature in Celsius",xlab="Date")
+abline(v=data$Date[grep("-01-01",data$Date)],col=grey(0.6),lty=2)
+
+plot(data$Date,data$rh_12,pch=".", cex=5, col= "black", main="Trend of monthly relative humidity measured at 12 hours (UTC) in Kathmandu district",
+     ylab="Relative humidity measured at 12_UTC",xlab="Date")
+abline(v=data$Date[grep("-01-01",data$Date)],col=grey(0.6),lty=2)
+
+plot(data$Date,data$rh_3,pch=".", cex=5, col= "brown", main="Trend of monthly relative humidity meausred at 3 hours (UTC) in Kathmandu district",
+     ylab="Relative humidity measured at 3_UTC",xlab="Date")
+abline(v=data$Date[grep("-01-01",data$Date)],col=grey(0.6),lty=2)
+
+plot(data$Date,data$mean_rh,pch=".", cex=5, col= "cyan", main="Trend of mean monthly relative humidity in Kathmandu district",
+     ylab="mean relative humidity",xlab="Date")
+abline(v=data$Date[grep("-01-01",data$Date)],col=grey(0.6),lty=2)
+
+```
