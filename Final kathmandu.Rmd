@@ -1,0 +1,137 @@
+---
+title: Regression model for climate variablitly and diarrhoeal disease study Kathmandu
+  city, Nepal
+author: "Dinesh Bhandari"
+date: "5 December 2018"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r, setup}
+
+### Loading the study data set###
+library(readxl)
+Kathmandu_monthly <- read_excel("~/Desktop/Monthly compiled data/Kathmandu_monthly.xls")
+data <- as.data.frame(Kathmandu_monthly)
+```
+
+```{r, echo=FALSE}
+### Loading the necessary libraries to carry out analysis ###
+
+library(tsModel)
+library(splines)
+library(dlnm)
+library(Epi)
+library(lmtest)
+```
+
+```{r, echo=TRUE}
+
+##### Setting the spline function of time to smooth the effect of seasonality and long term variation###
+### Natural cubic spline with 3 degree of freedom per year has been set to account for seasonality and long term variation###
+### Play with the degree of freedom (othewise also called knots) to see the change in final qAIC value of the model###
+
+spl <- ns(data$time, df=40)
+
+### Compute a variable for rainfall to determine increase in estimate per 10 mm rise in precipitation##
+data$rainfall10 <- data$rainfall/10
+
+## Run a modle without including the predictors to see the effect of smoothing (null model)###
+model1 <- glm(Diarrhoea_cases~spl, data, family=quasipoisson)
+summary(model1)
+pred1 <- predict(model1, type="response")
+
+```
+
+```{r, echo=TRUE}
+### Defining a function to calculate qAIC of the model for quasi-Poisson distribution##
+
+fqaic <- function(model) {
+  loglik <- sum(dpois(model$y,model$fitted.values,log=TRUE))
+  phi <- summary(model)$dispersion
+  qaic <- -2*loglik + 2*summary(model)$df[3]*phi
+  return(qaic)
+}
+
+qaic1 <- fqaic(model1)
+
+### Checking for partiatl autocorrelation function of the model##
+res <- residuals(model1, type="deviance")
+
+### Based on the lower qAIC value and PACF result, choose the df of freedom for spline smoothing that minimizes the qAIC value and residual autocorrelation function.
+
+```
+
+
+```{r, echo=TRUE}
+### Plot the graph of the smoothed relation between the dependent variable and Date###
+
+plot(data$Date,data$Diarrhoea_cases,pch=".", cex=5, type="o", col= "black", main="flexible cubic spline",
+     ylab="monthly number of diarrheal cases",xlab="Date")
+lines(data$Date, pred1, lwd=0.5, lty=2, col="green")
+
+resi <- residuals(model1, type="response")
+
+plot(data$Date,resi,pch=".", cex=4, col= "black", main="residual over time",
+     ylab="residuals",xlab="Date", type="o")
+abline(h=1, lwd=2, lty=5, col="red")
+
+hist(res)
+acf(res, lag.max=7)
+
+```
+
+```{r, echo=TRUE}
+### Defining the cross basis for temperature (unconstrained lag) and rainfall variables###
+#linear model for maximum temperature
+cbotemp <- crossbasis(data$max_temp,lag=1,argvar=list(fun="lin"),
+                      arglag=list(fun="integer"))
+### Threshold model ### threshold above the median temperature
+#Cbotemp<- crossbasis(data$max_temp, lag=1, argvar=list(fun="thr",
+#thr.value=quantile(obs$max_temp,0.5, na.rm=T)))
+
+cborain <- crossbasis(data$rainfall10,lag=1,argvar=list(fun="lin"),
+                      arglag=list(fun="integer"))
+
+### Runnning the regression model using the covariates###
+
+model2 <- glm(Diarrhoea_cases~cbotemp+cborain+ns(mean_rh, df=3)+spl, data, family=quasipoisson)
+summary(model2)
+
+### Confidence interval of the estimate for temperature and rainfall cross basis##
+(conti <- ci.lin (model2, subset = c("cbotemp", "cborain"), alpha = 0.1, Exp=T))
+
+
+###Diagnostic plots of the model
+qaic2 <- fqaic(model2)
+res2 <- residuals(model2, type="deviance")
+hist(res2)
+res2[is.na(res2)] <- 0
+acf(res2, lag.max=7, ylim=c(-0.4,1))
+```
+
+
+
+
+```{r, echo=TRUE}
+### Prediction and graphs##
+
+
+pred2 <- crosspred(cbotemp, model2,at= 1, bylag=0.2)
+pred3 <- crosspred(cborain, model2,at=10, bylag=0.2)
+
+### Set the plotting parameter##
+
+oldpar <- par(no.readonly=TRUE)
+par(mex=0.8,mfrow=c(1,2))
+plot(pred2, type="p",var=1, ci="bars",pch=19, ylim=c(0.85,1.3),main=" Distributed lag model for temperature", xlab= "Lag months", ylab="RR and 95% CI per 1 degree increase in max_temp", col="red")
+
+
+plot(pred3, type="p", var=10, ci="bars",pch=19, ylim=c(0.85,1.5), main=" Distributed lag model for rainfall", xlab= "Lag months", ylab="RR and 95% CI per 10 mm increase in rainfall", col="green")
+
+
+```
+
+
