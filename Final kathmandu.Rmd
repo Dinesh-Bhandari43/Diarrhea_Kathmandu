@@ -86,18 +86,18 @@ acf(res, lag.max=7)
 ```{r, echo=TRUE}
 ### Defining the cross basis for temperature (unconstrained lag) and rainfall variables###
 #linear model for maximum temperature
-cbotemp <- crossbasis(data$max_temp,lag=1,argvar=list(fun="lin"),
-                      arglag=list(fun="integer"))
+#cbotemp <- crossbasis(data$max_temp,lag=1,argvar=list(fun="lin"),
+                      #arglag=list(fun="integer"))
 ### Threshold model ### threshold above the median temperature
-#Cbotemp<- crossbasis(data$max_temp, lag=1, argvar=list(fun="thr",
-#thr.value=quantile(obs$max_temp,0.5, na.rm=T)))
+Cbotemp<- crossbasis(data$max_temp, lag=1, argvar=list(fun="thr",
+thr.value=quantile(obs$max_temp,0.5, na.rm=T)))
 
 cborain <- crossbasis(data$rainfall10,lag=1,argvar=list(fun="lin"),
                       arglag=list(fun="integer"))
 
 ### Runnning the regression model using the covariates###
 
-model2 <- glm(Diarrhoea_cases~cbotemp+cborain+ns(mean_rh, df=3)+spl, data, family=quasipoisson)
+model2 <- glm(Diarrhoea_cases~Cbotemp+cborain+ns(mean_rh, df=3)+spl, data, family=quasipoisson)
 summary(model2)
 
 ### Confidence interval of the estimate for temperature and rainfall cross basis##
