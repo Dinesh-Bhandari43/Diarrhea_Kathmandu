@@ -1,6 +1,6 @@
 ---
-title: Regression model for climate variablitly and diarrhoeal disease study Kathmandu
-  city, Nepal
+title: Regression model for climate variability and diarrhoeal disease study Kathmandu
+  City, Nepal
 author: "Dinesh Bhandari"
 date: "5 December 2018"
 output:
@@ -29,16 +29,16 @@ library(lmtest)
 
 ```{r, echo=TRUE}
 
-##### Setting the spline function of time to smooth the effect of seasonality and long term variation###
-### Natural cubic spline with 3 degree of freedom per year has been set to account for seasonality and long term variation###
-### Play with the degree of freedom (othewise also called knots) to see the change in final qAIC value of the model###
+##### Setting the spline function of time to smooth the effect of seasonality and long-term variation###
+### Natural cubic spline with 3 degrees of freedom per year has been set to account for seasonality and long-term variation###
+### Play with the degree of freedom (otherwise also called knots) to see the change in the final qAIC value of the model###
 
 spl <- ns(data$time, df=40)
 
-### Compute a variable for rainfall to determine increase in estimate per 10 mm rise in precipitation##
+### Compute a variable for rainfall to determine the increase in estimate per 10 mm rise in precipitation##
 data$rainfall10 <- data$rainfall/10
 
-## Run a modle without including the predictors to see the effect of smoothing (null model)###
+## Run a module without including the predictors to see the effect of smoothing (null model)###
 model1 <- glm(Diarrhoea_cases~spl, data, family=quasipoisson)
 summary(model1)
 pred1 <- predict(model1, type="response")
@@ -57,7 +57,7 @@ fqaic <- function(model) {
 
 qaic1 <- fqaic(model1)
 
-### Checking for partiatl autocorrelation function of the model##
+### Checking for partial autocorrelation function of the model##
 res <- residuals(model1, type="deviance")
 
 ### Based on the lower qAIC value and PACF result, choose the df of freedom for spline smoothing that minimizes the qAIC value and residual autocorrelation function.
@@ -96,7 +96,7 @@ Cbotemp<- crossbasis(data$max_temp, lag=1, argvar=list(fun="thr",
 cborain <- crossbasis(data$rainfall10,lag=1,argvar=list(fun="lin"),
                       arglag=list(fun="integer"))
 
-### Runnning the regression model using the covariates###
+### Running the regression model using the covariates###
 
 model2 <- glm(Diarrhoea_cases~Cbotemp+cborain+ns(mean_rh, df=3)+spl, data, family=quasipoisson)
 summary(model2)
