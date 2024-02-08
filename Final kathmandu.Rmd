@@ -102,7 +102,7 @@ model2 <- glm(Diarrhoea_cases~Cbotemp+cborain+ns(mean_rh, df=3)+spl, data, famil
 summary(model2)
 
 ### Confidence interval of the estimate for temperature and rainfall cross basis##
-(conti <- ci.lin (model2, subset = c("cbotemp", "cborain"), alpha = 0.1, Exp=T))
+(conti <- ci.lin (model2, subset = c("Cbotemp", "cborain"), alpha = 0.1, Exp=T))
 
 
 ###Diagnostic plots of the model
