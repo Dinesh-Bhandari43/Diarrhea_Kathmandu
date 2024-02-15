@@ -120,7 +120,7 @@ acf(res2, lag.max=7, ylim=c(-0.4,1))
 ### Prediction and graphs##
 
 
-pred2 <- crosspred(cbotemp, model2,at= 1, bylag=0.2)
+pred2 <- crosspred(cbotemp, model2,at= 27.33, bylag=0.2)
 pred3 <- crosspred(cborain, model2,at=10, bylag=0.2)
 
 ### Set the plotting parameter##
