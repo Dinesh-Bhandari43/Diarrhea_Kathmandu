@@ -90,7 +90,7 @@ acf(res, lag.max=7)
                       #arglag=list(fun="integer"))
 ### Threshold model ### threshold above the median temperature
 Cbotemp<- crossbasis(data$max_temp, lag=1, argvar=list(fun="thr",
-     thr.value=quantile(obs$max_temp,0.5, na.rm=T)), 
+     thr.value=quantile(data$max_temp,0.5, na.rm=T)), 
               arglag=list(fun="integer"))
 
 cborain <- crossbasis(data$rainfall10,lag=1,argvar=list(fun="lin"),
